@@ -1,6 +1,6 @@
 import { SettingsStore } from "../services/SettingsStore";
 import { configureMonaco } from "../core/MonacoConfig";
-import { registerThemes } from "../core/Themes";
+import { registerThemes, getThemeUIColors } from "../core/Themes";
 import { EditorManager } from "../core/EditorManager";
 import { TabsManager } from "../core/TabsManager";
 import { mountSettingsUI } from "../ui/SettingsPanel";
@@ -86,8 +86,8 @@ export class WizardJSApp {
 
   private applyEditorSettings() {
     const s = this.store.get();
-    const lineHeight = 24; // Fijo para consistencia
-    
+    const lineHeight = 24;
+
     this.editors.forEach((e) => {
       e.updateOptions({
         theme: s.theme,
@@ -101,10 +101,30 @@ export class WizardJSApp {
       });
     });
 
-    // Sincroniza el panel de salida con tipografía y altura de línea del editor
+    const tc = getThemeUIColors(s.theme);
+    const root = document.documentElement;
+    root.style.setProperty("--theme-bg", tc.background);
+    root.style.setProperty("--theme-fg", tc.foreground);
+    root.style.setProperty("--theme-border", tc.border);
+    root.style.setProperty("--theme-line-number", tc.lineNumber);
+    root.style.setProperty("--theme-panel-bg", tc.panelBg);
+    root.style.setProperty("--theme-hover-bg", tc.hoverBg);
+    root.style.setProperty("--theme-string", tc.string);
+    root.style.setProperty("--theme-number", tc.number);
+    root.style.setProperty("--theme-boolean", tc.boolean);
+    root.style.setProperty("--theme-nullish", tc.nullish);
+    root.style.setProperty("--theme-object", tc.object);
+    root.style.setProperty("--theme-func", tc.func);
+    root.style.setProperty("--theme-result", tc.result);
+    root.style.setProperty("--theme-error", tc.error);
+    root.style.setProperty("--theme-warning", tc.warning);
+    root.style.setProperty("--theme-info", tc.info);
+    root.style.setProperty("--theme-security", tc.security);
+    root.style.setProperty("--theme-security-bg", tc.securityBg);
+    root.style.setProperty("--theme-error-bg", tc.errorBg);
+
     document.querySelectorAll(".output-container").forEach((el) => {
       const h = el as HTMLElement;
-      // Envolver font-family en comillas para CSS
       h.style.setProperty("--editor-font-family", `"${s.fontFamily}", monospace`);
       h.style.setProperty("--editor-font-size", `${s.fontSize}px`);
       h.style.setProperty("--editor-line-height", `${lineHeight}px`);
