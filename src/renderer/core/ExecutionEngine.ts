@@ -8,6 +8,7 @@ import { transpileTS, createSource } from "../utils/tsHelpers";
 import * as ts from "typescript";
 import { EXECUTION_TIMEOUT, MAX_OUTPUT_LINES } from "../config/constants";
 import { codeFrameColumns } from "@babel/code-frame";
+import { t } from "i18next";
 
 export type LogSink = (
   type: "log" | "error" | "warn" | "info" | "result" | "security",
@@ -236,7 +237,7 @@ export class ExecutionEngine {
 let __loopCount=0;
 const __maxLoops=100000;
 function __loopGuard(){
-  if(++__loopCount>=__maxLoops) throw new Error('Bucle infinito detectado - ejecución detenida por seguridad');
+  if(++__loopCount>=__maxLoops) throw new Error('Infinite loop detected');
   return true;
 }
 const __original = function(){
@@ -254,7 +255,7 @@ try { __original(); } catch(e){ throw e; }
 
   async run(rawCode: string, sink: LogSink) {
     if (containsDangerousCode(rawCode)) {
-      sink("security", ["Código potencialmente peligroso detectado"]);
+      sink("security", [t('dangerousCodeDetected')]);
       return;
     }
     
@@ -286,13 +287,13 @@ try { __original(); } catch(e){ throw e; }
           if (abortCtrl.signal.aborted) return;
           if (lines >= MAX_OUTPUT_LINES) {
             sink("security", [
-              `Límite de output alcanzado (${MAX_OUTPUT_LINES} líneas)`,
+              t('outputLimitReached', { limit: MAX_OUTPUT_LINES }),
             ]);
             abortCtrl.abort();
             return;
           }
           if (Date.now() - started > EXECUTION_TIMEOUT) {
-            sink("security", ["Ejecución detenida por timeout"]);
+            sink("security", [t('executionStoppedByTimeout')]);
             abortCtrl.abort();
             return;
           }
@@ -333,7 +334,7 @@ try { __original(); } catch(e){ throw e; }
     const timeout = setTimeout(() => {
       if (!abortCtrl.signal.aborted) {
         sink("security", [
-          `Ejecución detenida por timeout (${EXECUTION_TIMEOUT / 1000}s)`,
+          t('executionStoppedByTimeoutSeconds', { seconds: EXECUTION_TIMEOUT / 1000 }),
         ]);
         abortCtrl.abort();
       }
@@ -363,7 +364,8 @@ try { __original(); } catch(e){ throw e; }
     const errorName = error.name || 'Error';
     
     // Detectar error de bucle infinito (nuestro guard)
-    if (msg.includes('Bucle infinito detectado') || msg.includes('infinite loop')) {
+    if (msg.includes('Infinite loop detected') || msg.includes('infinite loop')) {
+      const translatedMsg = t('infiniteLoopDetected');
       const loopLoc = this.findLoopLocation(rawCode);
       if (loopLoc) {
         const frame = codeFrameColumns(
@@ -371,9 +373,9 @@ try { __original(); } catch(e){ throw e; }
           { start: { line: loopLoc.line, column: loopLoc.column } },
           { linesAbove: 1, linesBelow: 1, highlightCode: false }
         );
-        return `${errorName}: ${msg}\n\n${frame}`;
+        return `${errorName}: ${translatedMsg}\n\n${frame}`;
       }
-      return `${errorName}: ${msg}`;
+      return `${errorName}: ${translatedMsg}`;
     }
 
     // Intentar extraer ubicación del error
@@ -562,9 +564,9 @@ try { __original(); } catch(e){ throw e; }
 
   // Formatear error de loop sin cuerpo
   private formatLoopError(code: string, loc: { type: string; line: number; column: number }): string {
-    const msg = loc.type === 'while' 
-      ? 'SyntaxError: Loop infinito detectado - while sin cuerpo de ejecución'
-      : 'SyntaxError: Estructura de control incompleta';
+    const msg = loc.type === 'while'
+      ? `SyntaxError: ${t('infiniteLoopWhileNoBody')}`
+      : `SyntaxError: ${t('incompleteControlStructure')}`;
     
     const frame = codeFrameColumns(
       code,

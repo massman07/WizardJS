@@ -35,5 +35,15 @@
     "runCode": "Ejecutar código",
     "newTab": "Nuevo tab",
     "saveFile": "Guardar",
-    "openSettings": "Configuraciones"
+    "openSettings": "Configuraciones",
+    "aboutMessage": "The Ultimate JavaScript & TypeScript Playground\n\nCreado por Francisco Brito",
+    "confirmSaveChanges": "¿Quieres guardar los cambios en {{title}}?",
+    "executionStoppedByUser": "Ejecución detenida por el usuario",
+    "infiniteLoopDetected": "Bucle infinito detectado - ejecución detenida por seguridad",
+    "dangerousCodeDetected": "Código potencialmente peligroso detectado",
+    "outputLimitReached": "Límite de output alcanzado ({{limit}} líneas)",
+    "executionStoppedByTimeout": "Ejecución detenida por timeout",
+    "executionStoppedByTimeoutSeconds": "Ejecución detenida por timeout ({{seconds}}s)",
+    "infiniteLoopWhileNoBody": "Loop infinito detectado - while sin cuerpo de ejecución",
+    "incompleteControlStructure": "Estructura de control incompleta"
 }

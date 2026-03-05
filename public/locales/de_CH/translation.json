@@ -35,5 +35,15 @@
     "runCode": "Code ausführen",
     "newTab": "Neuer Tab",
     "saveFile": "Speichern",
-    "openSettings": "Einstellungen"
+    "openSettings": "Einstellungen",
+    "aboutMessage": "The Ultimate JavaScript & TypeScript Playground\n\nErstellt von Francisco Brito",
+    "confirmSaveChanges": "Möchten Sie die Änderungen an {{title}} speichern?",
+    "executionStoppedByUser": "Ausführung vom Benutzer gestoppt",
+    "infiniteLoopDetected": "Endlosschleife erkannt - Ausführung aus Sicherheitsgründen gestoppt",
+    "dangerousCodeDetected": "Potenziell gefährlicher Code erkannt",
+    "outputLimitReached": "Ausgabelimit erreicht ({{limit}} Zeilen)",
+    "executionStoppedByTimeout": "Ausführung wegen Zeitüberschreitung gestoppt",
+    "executionStoppedByTimeoutSeconds": "Ausführung wegen Zeitüberschreitung gestoppt ({{seconds}}s)",
+    "infiniteLoopWhileNoBody": "Endlosschleife erkannt - while ohne Ausführungskörper",
+    "incompleteControlStructure": "Unvollständige Kontrollstruktur"
 }

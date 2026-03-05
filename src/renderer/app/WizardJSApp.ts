@@ -18,6 +18,7 @@ import { AUTO_RUN_DELAY } from "../config/constants";
 import { ExecutionEngine } from "../core/ExecutionEngine";
 import "../config/electron.d.ts";
 import { mountLanguageHandler } from "../services/I18n";
+import { t } from "i18next";
 
 export class WizardJSApp {
   private store = new SettingsStore();
@@ -80,7 +81,7 @@ export class WizardJSApp {
   private showAbout() {
     // Modal simple de About
     const version = "1.0.0";
-    alert(`WizardJS v${version}\n\nThe Ultimate JavaScript & TypeScript Playground\n\nCreado por Francisco Brito`);
+    alert(`WizardJS v${version}\n\n${t('aboutMessage')}`);
   }
 
   private applyEditorSettings() {
@@ -148,7 +149,7 @@ export class WizardJSApp {
     const td = this.tabs.get(id);
     if (
       td?.isDirty &&
-      !confirm(`¿Quieres guardar los cambios en ${td.title}?`)
+      !confirm(t('confirmSaveChanges', { title: td.title }))
     ) {
       // user chose not to save, proceed to close
     }
@@ -175,7 +176,7 @@ export class WizardJSApp {
 
   private stopExecution() {
     this.engine.abort();
-    appendSecurity(this.tabs.active(), "Ejecución detenida por el usuario");
+    appendSecurity(this.tabs.active(), t('executionStoppedByUser'));
   }
 
   private async openFile() {

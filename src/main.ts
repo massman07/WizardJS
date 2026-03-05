@@ -212,9 +212,9 @@ function setupAutoUpdater() {
   autoUpdater.on('update-available', (info: { version: string }) => {
     dialog.showMessageBox({
       type: 'info',
-      title: 'Actualización disponible',
-      message: `Una nueva versión (${info.version}) está disponible. ¿Deseas descargarla ahora?`,
-      buttons: ['Descargar', 'Más tarde'],
+      title: 'Update Available',
+      message: `A new version (${info.version}) is available. Would you like to download it now?`,
+      buttons: ['Download', 'Later'],
       defaultId: 0,
     }).then((result) => {
       if (result.response === 0) {
@@ -234,9 +234,9 @@ function setupAutoUpdater() {
   autoUpdater.on('update-downloaded', (info: { version: string }) => {
     dialog.showMessageBox({
       type: 'info',
-      title: 'Actualización lista',
-      message: `La versión ${info.version} se ha descargado. ¿Reiniciar ahora para instalar?`,
-      buttons: ['Reiniciar', 'Más tarde'],
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded. Restart now to install?`,
+      buttons: ['Restart', 'Later'],
       defaultId: 0,
     }).then((result) => {
       if (result.response === 0) {
