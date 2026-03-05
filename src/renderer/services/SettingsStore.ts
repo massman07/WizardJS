@@ -4,6 +4,10 @@ import { DEFAULT_SETTINGS, SETTINGS_KEY } from "../config/constants";
 export class SettingsStore {
   private settings: AppSettings = { ...DEFAULT_SETTINGS } as AppSettings;
 
+  constructor() {
+    this.load();
+  }
+
   load() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
