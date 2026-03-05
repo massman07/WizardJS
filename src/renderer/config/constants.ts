@@ -1,4 +1,5 @@
 export const SETTINGS_KEY = "wizardjs-settings";
+export const TABS_KEY = "wizardjs-tabs";
 export const AUTO_RUN_DELAY = 1000; // ms
 export const EXECUTION_TIMEOUT = 5000; // ms
 export const MAX_OUTPUT_LINES = 1000;

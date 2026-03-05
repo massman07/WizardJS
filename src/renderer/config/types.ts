@@ -29,4 +29,5 @@ export interface TabData {
   content: string;
   isDirty: boolean;
   file: string | null;
+  savedContent: string;
 }

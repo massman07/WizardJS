@@ -31,7 +31,7 @@ export function addTabDom(id: string, title: string) {
   const el = document.createElement("div");
   el.className = "tab";
   el.setAttribute("data-tab-id", id);
-  el.innerHTML = `<span class="tab-title">${title}</span><button class="tab-close" title="Cerrar tab"><i class="fas fa-times"></i></button>`;
+  el.innerHTML = `<span class="tab-title">${title}</span><button class="tab-close" title="Close tab"><i class="fas fa-times icon-close"></i><i class="fas fa-circle icon-dirty"></i></button>`;
   container.appendChild(el);
 }
 
@@ -63,4 +63,10 @@ export function switchTo(id: string) {
 export function removeTabDom(id: string) {
   document.querySelector(`[data-tab-id="${id}"].tab`)?.remove();
   document.querySelector(`[data-tab-id="${id}"].tab-pane`)?.remove();
+}
+
+export function updateTabDirty(id: string, isDirty: boolean) {
+  const tab = document.querySelector(`[data-tab-id="${id}"].tab`) as HTMLElement | null;
+  if (!tab) return;
+  tab.classList.toggle("dirty", isDirty);
 }

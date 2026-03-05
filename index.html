@@ -190,6 +190,19 @@
       </div>
     </div>
 
+    <!-- Confirm dialog (avoids native confirm which breaks Monaco focus) -->
+    <div id="confirmDialog" class="confirm-overlay" style="display:none">
+      <div class="confirm-box">
+        <p id="confirmMessage"><i class="fas fa-exclamation-triangle confirm-warn-icon"></i><span id="confirmMessageText"></span></p>
+        <p id="confirmSubtitle" class="confirm-subtitle"></p>
+        <div class="confirm-actions">
+          <button id="confirmSave" class="confirm-btn confirm-btn-ok"></button>
+          <button id="confirmDontSave" class="confirm-btn confirm-btn-danger"></button>
+          <button id="confirmCancel" class="confirm-btn confirm-btn-cancel"></button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/renderer/index.ts"></script>
   </body>
 </html>

@@ -12,6 +12,7 @@ import {
   mountTabsHandlers,
   removeTabDom,
   switchTo,
+  updateTabDirty,
 } from "../ui/TabsView";
 import { appendOutput, clearOutput, appendSecurity } from "../ui/Output";
 import { AUTO_RUN_DELAY } from "../config/constants";
@@ -32,16 +33,34 @@ export class WizardJSApp {
     registerThemes();
     
     // Configurar callback global para auto-run en todos los editores
-    this.editors.setOnContentChange((tabId) => this.scheduleAutoRun(tabId));
-    
-    const first = this.tabs.initFirstTab(this.getWelcomeCode());
-    addTabDom(first, "Untitled-1");
-    addPaneDom(first);
-    setTimeout(() => {
-      this.editors.create(first, this.tabs.get(first)!.content);
-      this.switchTo(first);
-      this.applyEditorSettings();
-    }, 10);
+    this.editors.setOnContentChange((tabId) => {
+      this.updateDirtyState(tabId);
+      this.scheduleAutoRun(tabId);
+    });
+
+    const restored = this.tabs.restoreTabs();
+    if (restored) {
+      for (const { id, data } of restored.tabs) {
+        addTabDom(id, data.title);
+        addPaneDom(id);
+      }
+      setTimeout(() => {
+        for (const { id, data } of restored.tabs) {
+          this.editors.create(id, data.content);
+        }
+        this.switchTo(restored.activeTabId);
+        this.applyEditorSettings();
+      }, 10);
+    } else {
+      const first = this.tabs.initFirstTab(this.getWelcomeCode());
+      addTabDom(first, "Untitled-1");
+      addPaneDom(first);
+      setTimeout(() => {
+        this.editors.create(first, this.tabs.get(first)!.content);
+        this.switchTo(first);
+        this.applyEditorSettings();
+      }, 10);
+    }
 
     mountToolbar(
       () => this.executeCode(),
@@ -138,10 +157,38 @@ export class WizardJSApp {
       const ed = this.editors.get(tabId);
       if (!ed) return;
       const code = ed.getValue();
+      this.persistTabs();
       if (this.store.get().autoRunEnabled && this.engine.isReady(code))
         this.executeCode();
     }, AUTO_RUN_DELAY);
     this.autoRunTimeout.set(tabId, handle);
+  }
+
+  private updateDirtyState(tabId: string) {
+    const td = this.tabs.get(tabId);
+    const ed = this.editors.get(tabId);
+    if (!td || !ed) return;
+    const isDirty = ed.getValue() !== td.savedContent;
+    if (td.isDirty !== isDirty) {
+      this.tabs.set(tabId, { isDirty });
+      updateTabDirty(tabId, isDirty);
+    }
+  }
+
+  private markClean(tabId: string) {
+    const ed = this.editors.get(tabId);
+    const content = ed ? ed.getValue() : "";
+    this.tabs.set(tabId, { isDirty: false, savedContent: content });
+    updateTabDirty(tabId, false);
+  }
+
+  private persistTabs() {
+    // Sync editor content to tab data before persisting
+    for (const id of this.tabs.allIds()) {
+      const ed = this.editors.get(id);
+      if (ed) this.tabs.set(id, { content: ed.getValue() });
+    }
+    this.tabs.persistTabs();
   }
 
   private switchTo(id: string) {
@@ -149,9 +196,9 @@ export class WizardJSApp {
     switchTo(id);
     setTimeout(() => {
       this.editors.get(id)?.layout?.();
-      // Actualiza variables de tipografía del panel de salida según el editor activo
       this.applyEditorSettings();
     }, 50);
+    this.persistTabs();
   }
 
   private newFile() {
@@ -161,17 +208,24 @@ export class WizardJSApp {
     setTimeout(() => {
       this.editors.create(id, "");
       this.switchTo(id);
+      this.persistTabs();
     }, 50);
   }
 
-  private closeTab(id: string) {
+  private async closeTab(id: string) {
     if (this.tabs.size() <= 1) return;
     const td = this.tabs.get(id);
-    if (
-      td?.isDirty &&
-      !confirm(t('confirmSaveChanges', { title: td.title }))
-    ) {
-      // user chose not to save, proceed to close
+    if (td?.isDirty) {
+      const result = await this.showCloseConfirm(
+        t('confirmSaveChanges', { title: td.title })
+      );
+      if (result === "cancel") {
+        this.editors.get(this.tabs.active())?.focus();
+        return;
+      }
+      if (result === "save") {
+        await this.saveFile();
+      }
     }
     this.editors.dispose(id);
     this.tabs.remove(id);
@@ -180,6 +234,39 @@ export class WizardJSApp {
       const rest = this.tabs.allIds();
       if (rest.length) this.switchTo(rest[0]);
     }
+    this.persistTabs();
+    this.editors.get(this.tabs.active())?.focus();
+  }
+
+  private showCloseConfirm(message: string): Promise<"save" | "dontsave" | "cancel"> {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("confirmDialog")!;
+      const msgEl = document.getElementById("confirmMessageText")!;
+      const saveBtn = document.getElementById("confirmSave")!;
+      const dontSaveBtn = document.getElementById("confirmDontSave")!;
+      const cancelBtn = document.getElementById("confirmCancel")!;
+      const subtitleEl = document.getElementById("confirmSubtitle")!;
+      msgEl.textContent = message;
+      subtitleEl.textContent = t('changesWillBeLost') || "Your changes will be lost if you don't save them.";
+      saveBtn.textContent = t('save') || "Save";
+      dontSaveBtn.textContent = t('dontSave') || "Don't Save";
+      cancelBtn.textContent = t('cancel') || "Cancel";
+      overlay.style.display = "flex";
+      const cleanup = (result: "save" | "dontsave" | "cancel") => {
+        overlay.style.display = "none";
+        saveBtn.removeEventListener("click", onSave);
+        dontSaveBtn.removeEventListener("click", onDontSave);
+        cancelBtn.removeEventListener("click", onCancel);
+        resolve(result);
+      };
+      const onSave = () => cleanup("save");
+      const onDontSave = () => cleanup("dontsave");
+      const onCancel = () => cleanup("cancel");
+      saveBtn.addEventListener("click", onSave);
+      dontSaveBtn.addEventListener("click", onDontSave);
+      cancelBtn.addEventListener("click", onCancel);
+      saveBtn.focus();
+    });
   }
 
   private executeCode() {
@@ -224,7 +311,7 @@ export class WizardJSApp {
 
       // Crear nuevo tab con el contenido del archivo
       const id = this.tabs.create();
-      this.tabs.set(id, { title: name, content, isDirty: false, file: name });
+      this.tabs.set(id, { title: name, content, isDirty: false, file: name, savedContent: content });
       addTabDom(id, name);
       addPaneDom(id);
       setTimeout(() => {
@@ -233,6 +320,7 @@ export class WizardJSApp {
         // Actualizar título del tab en el DOM
         const tabEl = document.querySelector(`[data-tab-id="${id}"].tab .tab-title`);
         if (tabEl) tabEl.textContent = name;
+        this.persistTabs();
       }, 50);
     } catch (err: any) {
       // Usuario canceló o error
@@ -272,10 +360,12 @@ export class WizardJSApp {
       // Actualizar estado del tab
       const fileName = fileHandle.name;
       this.tabs.set(activeId, { title: fileName, file: fileName, isDirty: false });
-      
+      this.markClean(activeId);
+
       // Actualizar título en el DOM
       const tabEl = document.querySelector(`[data-tab-id="${activeId}"].tab .tab-title`);
       if (tabEl) tabEl.textContent = fileName;
+      this.persistTabs();
     } catch (err: any) {
       if (err.name !== "AbortError") {
         console.error("Error saving file:", err);
