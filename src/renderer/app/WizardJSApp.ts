@@ -83,6 +83,10 @@ export class WizardJSApp {
     );
     this.setupKeyboardShortcuts();
     this.setupMenuListeners();
+
+    window.addEventListener("beforeunload", () => {
+      this.persistTabs();
+    });
   }
 
   private setupMenuListeners() {

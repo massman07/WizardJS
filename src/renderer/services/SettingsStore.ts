@@ -11,7 +11,11 @@ export class SettingsStore {
   load() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
-      if (raw) this.settings = { ...this.settings, ...JSON.parse(raw) };
+      if (raw) {
+        this.settings = { ...this.settings, ...JSON.parse(raw) };
+      } else {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings));
+      }
     } catch {
       /* noop */
     }
